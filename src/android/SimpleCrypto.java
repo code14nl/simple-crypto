@@ -51,6 +51,7 @@ public class SimpleCrypto extends CordovaPlugin {
                 } else {
                     cordova.getThreadPool().execute(new Runnable() {
                         public void run() {
+
                             try {
                                 final byte[] raw = cryptor.decryptData(Base64.decode(DATA,0), KEY.toCharArray());
                                 cordova.getActivity().runOnUiThread(new Runnable() {
