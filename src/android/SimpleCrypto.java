@@ -24,13 +24,13 @@ public class SimpleCrypto extends CordovaPlugin {
 
     @Override
     public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
-     boolean result = true;
+     
      Log.d(TAG, "execute() called. Action: " + action);
 
      List<String> actions = Arrays.asList("encrypt", "decrypt");
      if (!actions.contains(action)) {
          Log.e(TAG, "Invalid action: " + action);
-         result = false;
+         
      } else {
          try {
              final JNCryptor cryptor = new AES256JNCryptor();
@@ -42,12 +42,10 @@ public class SimpleCrypto extends CordovaPlugin {
                     callbackContext.success(Base64.encodeToString(ciphertext, 0));
                  } catch (CryptorException e) {
                    e.printStackTrace();
-                   result = false;
                  }
              } else {
                 if (DATA.length() == 0) {
                     callbackContext.error("source data cannot be empty string");
-                    result = false;
                 } else {
                     cordova.getThreadPool().execute(new Runnable() {
                         public void run() {
@@ -65,7 +63,6 @@ public class SimpleCrypto extends CordovaPlugin {
                                 });
                             } catch (CryptorException e) {
                                e.printStackTrace();
-                               result = false;
                             }
                         }
                     });
@@ -74,13 +71,11 @@ public class SimpleCrypto extends CordovaPlugin {
          } catch (JSONException e) {
              Log.e(TAG, "Got JSON Exception " + e.getMessage());
              callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION, e.getMessage()));
-             result = false;
          } catch(Exception e) {
              Log.e(TAG, "Got Unhandled Exception " + e.getMessage());
              callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, e.getMessage()));
-             result = false;
          }
      }
-     return result;
+     return true;
     }
 }
