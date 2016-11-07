@@ -23,7 +23,7 @@ public class SimpleCrypto extends CordovaPlugin {
     private final String TAG = "SimpleCrypto Plugin";
 
     @Override
-    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+    public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
      boolean result = true;
      Log.d(TAG, "execute() called. Action: " + action);
 
@@ -33,9 +33,9 @@ public class SimpleCrypto extends CordovaPlugin {
          result = false;
      } else {
          try {
-             JNCryptor cryptor = new AES256JNCryptor();
-             String KEY  = args.getString(0);
-             String DATA = args.getString(1);
+             final JNCryptor cryptor = new AES256JNCryptor();
+             final String KEY  = args.getString(0);
+             final String DATA = args.getString(1);
              if (action.equals("encrypt")) {
                 try {
                     byte[] ciphertext = cryptor.encryptData(DATA.getBytes(), KEY.toCharArray());
@@ -45,13 +45,30 @@ public class SimpleCrypto extends CordovaPlugin {
                    result = false;
                  }
              } else {
-                 if (DATA.length() == 0) {
-                     callbackContext.error("source data cannot be empty string");
-                     result = false;
-                 } else {
-                     byte[] raw = cryptor.decryptData(Base64.decode(DATA,0), KEY.toCharArray());
-                     callbackContext.success(new String(raw));
-                 }
+                if (DATA.length() == 0) {
+                    callbackContext.error("source data cannot be empty string");
+                    result = false;
+                } else {
+                    cordova.getThreadPool().execute(new Runnable() {
+                        public void run() {
+                            try {
+                                final byte[] raw = cryptor.decryptData(Base64.decode(DATA,0), KEY.toCharArray());
+                                cordova.getActivity().runOnUiThread(new Runnable() {
+                                    public void run() {
+                                        try {
+                                            callbackContext.success(new String(raw));
+                                        } catch (Exception e) {
+                                          e.printStackTrace();
+                                        }
+                                    }
+                                });
+                            } catch (CryptorException e) {
+                               e.printStackTrace();
+                               result = false;
+                            }
+                        }
+                    });
+                }
              }
          } catch (JSONException e) {
              Log.e(TAG, "Got JSON Exception " + e.getMessage());
